@@ -8,6 +8,8 @@ import matplotlib.pylab as plt
 torchaudio.set_audio_backend("soundfile")
 import pyaudio
 
+torch.backends.quantized.engine = 'qnnpack'
+
 model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
                               model='silero_vad',
                               force_reload=True)
@@ -54,7 +56,7 @@ stream = audio.open(format=FORMAT,
 data = []
 voiced_confidences = []
 
-from jupyterplot import ProgressPlot
+# from jupyterplot import ProgressPlot
 import threading
 
 continue_recording = True

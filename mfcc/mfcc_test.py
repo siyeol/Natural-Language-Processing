@@ -2,7 +2,6 @@ import matplotlib.pyplot as plt
 import librosa.display
 import librosa
 import numpy as np
-import moviepy.editor as mp
 
 # mp.VideoFileClip(r"WJ_test.mp4").subclip(0,300).audio.write_audiofile("sample.wav")
 
@@ -27,13 +26,39 @@ size = delta2_mfcc.size
 rate = 100 - silence / size * 100
 print(size, silence,"\n", rate, "%")
 
-y = librosa.load(path,sample_rate)
 
-plt.figure(figsize=(12, 1))
-librosa.display.waveplot(y,sr=sample_rate, x_axis="time")
+
+speakCount =0
+speakIndex = np.where(abs(delta2_mfcc)>5)[1]
+print(speakIndex.size)
+
+toggle = True
+
+for i in speakIndex:
+    if i-3&i-2&i-1&i&i+1&i+2&i+3 in speakIndex :
+        if Toggle == True :
+            speakCount+=1
+            print(i)
+            Toggle = False
+    else :
+        Toggle = True
+    
+    
+
+print("this is the number of speaks" , speakCount)
+
+# print(delta2_mfcc[0][8111])
+
+# y = librosa.load(path,sample_rate)
+
+plt.figure(figsize=(9, 3))
+librosa.display.waveplot(x)
+
+# librosa.display.specshow(delta2_mfcc, x_axis='time')
+
 # plt.ylabel('MFCC coeffs')
 # plt.xlabel('Time')
 # plt.title('MFCC')
-plt.colorbar()
-plt.tight_layout()
+# plt.colorbar()
+# plt.tight_layout()
 plt.show()
