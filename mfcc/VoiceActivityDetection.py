@@ -7,12 +7,14 @@ import matplotlib
 import matplotlib.pylab as plt
 torchaudio.set_audio_backend("soundfile")
 import pyaudio
+import time
 
-torch.backends.quantized.engine = 'qnnpack'
+plt.rcParams["figure.figsize"]=(12,3)
 
 model, utils = torch.hub.load(repo_or_dir='snakers4/silero-vad',
                               model='silero_vad',
                               force_reload=True)
+
 
 (get_speech_ts,
  get_speech_ts_adaptive,
@@ -55,6 +57,7 @@ stream = audio.open(format=FORMAT,
                     frames_per_buffer=CHUNK)
 data = []
 voiced_confidences = []
+test_confidences = []
 
 # from jupyterplot import ProgressPlot
 import threading
@@ -72,9 +75,10 @@ def start_recording():
                         rate=SAMPLE_RATE,
                         input=True,
                         frames_per_buffer=CHUNK)
-
+    startTime=time.time()
     data = []
     voiced_confidences = []
+    test_confidences = []
 
     global continue_recording
     continue_recording = True
@@ -85,6 +89,10 @@ def start_recording():
     stop_listener = threading.Thread(target=stop)
     stop_listener.start()
 
+    isAgain = False
+    temp_confidence = []
+    speechCount = 0
+    checkTime = 0
     while continue_recording:
         audio_chunk = stream.read(int(SAMPLE_RATE * frame_duration_ms / 1000.0))
 
@@ -102,25 +110,70 @@ def start_recording():
         new_confidence = vad_outs[:, 1].numpy()[0].item()
         # new_confidence = vad_outs[:, 1]
 
+        #잘 되는 코드 하나 근데 쪼금 불안정
+        # if new_confidence>0.7 and isAgain is False : #처음 시작 타임체크
+        #     checkTime = time.time()
+        #     isAgain = True
+        # elif new_confidence>0.7 and isAgain is True and Toggle is False: #다음 일때, 연속 체크
+        #     nowTime = time.time()
+        #     temp_confidence.append(new_confidence)
+        #     temp_avg = sum(temp_confidence)/len(temp_confidence)
+        #     if nowTime - checkTime > 7 and temp_avg>0.5: #7초가 지났을 때
+        #         speechCount+=1
+        #         isAgain=False
+        #         Toggle=True
+        #         print("발표!", nowTime-startTime)
+        #         temp_confidence.clear()
+        # if new_confidence<=0.7:
+        #     Toggle=False
+
+        if new_confidence>0.7 and isAgain is False:
+            isAgain = True
+            checkTime = time.time()
+
+        if isAgain is True:
+            temp_confidence.append(new_confidence)
+            nowTime=time.time()
+            if nowTime - checkTime > 6: #6초의 타임스팬에서
+                temp_avg = sum(temp_confidence)/len(temp_confidence)
+                temp_spoken = sum(map(lambda x: x > 0.6, temp_confidence))
+                temp_spoken_ratio = temp_spoken/len(temp_confidence)
+                if temp_spoken_ratio>0.4: #말을 한 비율이 40%정도면 발표로 인식
+                    speechCount+=1
+                    balpyo_time = nowTime-startTime
+                    print("발표! {}분 {}초".format(int(balpyo_time/60), int(balpyo_time%60)))
+                temp_confidence.clear()
+                isAgain=False
+
+
+        if len(voiced_confidences)>50 :
+            del voiced_confidences[0]
         voiced_confidences.append(new_confidence)
+        test_confidences.append(new_confidence)
 
         # print(type(voiced_confidences))
 
         # pp.update(new_confidence)
+        plt.clf()
+        plt.ylim([0,1])
+        plt.xticks([])
         plt.plot(voiced_confidences)
-        plt.pause(0.0000001)
+        plt.pause(0.00001)
 
-
+    print("\n\n총 발표 횟수 : ",speechCount)
     # pp.finalize()
     # plt.plot(new_confidence)
     # plt.figure(figsize=(12, 6))
-    count = sum(map(lambda x: x > 0.7, voiced_confidences))
-    length = len(voiced_confidences)
-    print("total length : ", length)
-    print("count speak : ", count)
-    print("speaking rate : ", (count/length)*100, "%")
+    endTime = time.time()
+    timeSpan = endTime-startTime
+    # print(timeSpan)
+    # print(voiced_confidences)
+    count = sum(map(lambda x: x > 0.7, test_confidences))
+    length = len(test_confidences)
+
+    print("발화 비율 : ", (count/length)*100, "%")
     plt.savefig('vad_result.png', bbox_inches='tight')
-    plt.show()
+    # plt.show()
 
 
 # print(type(voiced_confidences))
