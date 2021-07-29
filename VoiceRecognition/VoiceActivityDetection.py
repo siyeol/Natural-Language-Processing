@@ -157,7 +157,7 @@ def start_recording():
         plt.clf()
         plt.ylim([0,1])
         plt.xticks([])
-        plt.axhline(y=0.7)
+        plt.axhline(y=0.7, color='r')
         plt.plot(voiced_confidences)
         plt.pause(0.00001)
 
