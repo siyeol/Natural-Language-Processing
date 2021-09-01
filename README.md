@@ -9,3 +9,7 @@ Web Text Data Mining from 'The Guardian' soccer section news articles
 ### 3. Voice Recognition
 #### WoongJin,Think Big - "Engagement Detection and Enhancement at Online Classroom" (2021 JUN ~ )
 Detects Voice Activity from audio files and Counts number of speak ups
+
+### 4. Recommender System
+#### ReRoCS - "Roadmap Recommender & Trend Analysis for www.cs-roadmap.com" (2021 AUG ~ )
+Recommends next step for computer scientists and shows hottest keyword among articles and comments
